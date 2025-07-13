@@ -10,7 +10,7 @@ import time
 from ..configs.settings import REQUEST_TIMEOUT, MAX_RETRIES
 from ..utils.text_utils import clean_text, normalize_url, extract_domain
 from ..utils.logger import get_logger
-from utils import logger
+from ..utils.logger import logger
 
 @dataclass
 class WebsiteContent:
@@ -96,6 +96,27 @@ class WebsiteScraper:
         except Exception as e:
             logger.error(f"Failed to parse content from {url}", e)
             return None
+        
+    def scrape_multiple_websites(self, urls: List[str]) -> Dict[str, WebsiteContent]:
+        """Scrape multiple websites and return results"""
+        logger.step(f"Scraping {len(urls)} websites")
+        
+        results = {}
+        
+        for i, url in enumerate(urls, 1):
+            logger.debug(f"Processing website {i}/{len(urls)}: {url}")
+            
+            content = self.scrape_website(url)
+            if content:
+                results[url] = content
+            else:
+                logger.warning(f"Failed to scrape {url}")
+            
+            if i < len(urls):
+                time.sleep(1)
+        
+        logger.success(f"Successfully scraped {len(results)}/{len(urls)} websites")
+        return results
         
     def _extract_metadata(self, soup: BeautifulSoup) -> Dict[str, str]:
         """Extract metadata from HTML"""

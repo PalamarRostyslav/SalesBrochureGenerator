@@ -159,6 +159,10 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+# Output files
+output/brochures/
+!output/brochures/.gitkeep
+
 # Pyre type checker
 .pyre/
 
