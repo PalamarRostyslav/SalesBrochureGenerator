@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from ..config.settings import OUTPUT_DIR
+from ..configs.settings import OUTPUT_DIR
 from .text_utils import sanitize_filename
 from .logger import get_logger
 
@@ -125,7 +125,7 @@ class FileHandler:
                     file_time = datetime.fromtimestamp(file_path.stat().st_mtime)
                     if file_time < cutoff_date:
                         file_path.unlink()
-                        deleted_count += 1
+                        deleted_count += 1 
             
             logger.info(f"Cleaned up {deleted_count} old files")
             return deleted_count

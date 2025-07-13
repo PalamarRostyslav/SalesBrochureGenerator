@@ -10,7 +10,7 @@ from rich.logging import RichHandler
 from rich.text import Text
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from ..config.settings import LOGS_DIR, LOG_LEVEL
+from ..configs.settings import LOGS_DIR, LOG_LEVEL
 
 class EnhancedLogger:
     """Enhanced logger with rich formatting and progress tracking"""
