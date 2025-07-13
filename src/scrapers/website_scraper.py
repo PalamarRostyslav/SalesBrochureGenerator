@@ -67,6 +67,8 @@ class WebsiteScraper:
             title = "No title found"
             if soup.title and soup.title.string:
                 title = clean_text(soup.title.string)
+                
+            metadata = self._extract_metadata(soup)
             
             if soup.body:
                 # Remove irrelevant elements
@@ -84,7 +86,8 @@ class WebsiteScraper:
                 url=url,
                 title=title,
                 text=text,
-                links=links
+                links=links,
+                metadata=metadata
             )
             
             logger.info(f"Successfully scraped {url} - {len(text)} characters, {len(links)} links")
@@ -93,6 +96,32 @@ class WebsiteScraper:
         except Exception as e:
             logger.error(f"Failed to parse content from {url}", e)
             return None
+        
+    def _extract_metadata(self, soup: BeautifulSoup) -> Dict[str, str]:
+        """Extract metadata from HTML"""
+        metadata = {}
+        
+        # Extract meta tags
+        for meta in soup.find_all('meta'):
+            name = meta.get('name') or meta.get('property')
+            content = meta.get('content')
+            
+            if name and content:
+                metadata[name] = content
+        
+        # Extract structured data
+        for script in soup.find_all('script', type='application/ld+json'):
+            try:
+                import json
+                data = json.loads(script.string)
+                if isinstance(data, dict) and '@type' in data:
+                    metadata['structured_data_type'] = data.get('@type')
+                    if 'name' in data:
+                        metadata['company_name'] = data['name']
+            except:
+                pass
+        
+        return metadata
     
     def _extract_links(self, soup: BeautifulSoup, base_url: str) -> List[str]:
         """Extract and normalize links from HTML"""
