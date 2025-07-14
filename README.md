@@ -37,19 +37,26 @@ Ukrainian (ua)
 
 # Core dependencies
 requests>=2.31.0
+
 beautifulsoup4>=4.12.0
+
 python-dotenv>=1.0.0
+
 openai>=1.0.0
 
 # Utilities
 click>=8.1.0
+
 colorama>=0.4.6
+
 rich>=13.0.0
 
 # Setup
 
 1) Clone the repository
+   
 2) Install dependencies
+   
 3) Configure environnment. Edit .env file and add your OpenaAI API Key:
 OPENAI_API_KEY=sk-proj-your-openai-api-key-here
 
@@ -59,19 +66,24 @@ OPENAI_API_KEY=sk-proj-your-openai-api-key-here
 
 # Basic Usage:
 Generate a brochure for a company
+
 python main.py generate "Anthropic" "https://anthropic.com"
 
 # Quick generation with default settings
+
 python main.py quick "OpenAI" "https://openai.com"
 
 Advanced Options
 # Generate in Spanish with streaming output
+
 python main.py generate "Apple" "https://www.apple.com" --language es --stream
 
 # Use specific model and save metadata
+
 python main.py generate "Microsoft" "https://microsoft.com" --model gpt-4o-mini --save-metadata
 
 # Export to custom location
+
 python main.py export "Apple" "https://apple.com" --output ./custom/apple_brochure.md
 
 
