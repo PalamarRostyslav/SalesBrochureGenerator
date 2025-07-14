@@ -305,9 +305,9 @@ class BrochureGenerator:
         }
     
     def get_supported_languages(self) -> Dict[str, str]:
-        """Get supported languages for brochure generation."""
+        """Get supported languages for brochure generation"""
         return SUPPORTED_LANGUAGES.copy()
     
-    def cleanup_old_files(self, days_old: int = 30) -> int:
-        """Clean up old generated files."""
-        return self.file_handler.cleanup_old_files(days_old)
+    def cleanup_files(self, days_old: int = None) -> int:
+        """Clean up old generated files"""
+        return self.file_handler.cleanup_files(days_old)

@@ -42,7 +42,6 @@ def cli():
     help='Save generation metadata')
 @click.option('--model', '-m', default=None,
     help='OpenAI model to use (overrides default)')
-
 def generate(company_name: str, website_url: str, language: str, 
             stream: bool, few_shot: bool, save_metadata: bool, model: Optional[str]):
     """Generate a brochure for a company from their website
@@ -121,14 +120,17 @@ def languages():
         logger.console.print(f"  {code}: {name}")
 
 @cli.command()
-@click.option('--days', '-d', default=30, type=int,
-    help='Delete files older than this many days')
+@click.option('--days', '-d', default=None, type=int,
+    help='Delete files older than this many days. If not specified, deletes all files')
 def cleanup(days: int):
     """Clean up old generated files."""
     try:
         generator = BrochureGenerator()
-        deleted_count = generator.cleanup_old_files(days)
-        logger.success(f"Cleaned up {deleted_count} files older than {days} days")
+        deleted_count = generator.cleanup_files(days)
+        if days is not None:
+            logger.success(f"Cleaned up {deleted_count} files older than {days} days")
+        else:
+            logger.success(f"Cleaned up {deleted_count} files (all files)")
         
     except Exception as e:
         logger.error("Cleanup failed", e)

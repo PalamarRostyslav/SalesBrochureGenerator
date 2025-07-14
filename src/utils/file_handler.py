@@ -112,22 +112,34 @@ class FileHandler:
             logger.error(f"Failed to get file info for {file_path}", e)
             return {}
     
-    def cleanup_old_files(self, days_old: int = 30) -> int:
-        """Clean up files older than specified days"""
+    def cleanup_files(self, days_old: int = None) -> int:
+        """Clean up files from output directory"""
         from datetime import timedelta
         
-        cutoff_date = datetime.now() - timedelta(days=days_old)
+        cutoff_date = None
         deleted_count = 0
+        
+        if days_old is not None:
+            cutoff_date = datetime.now() - timedelta(days=days_old)
         
         try:
             for file_path in self.output_dir.glob("*"):
-                if file_path.is_file():
+                if not file_path.is_file():
+                    continue
+                
+                should_delete = True
+                
+                if cutoff_date is not None:
                     file_time = datetime.fromtimestamp(file_path.stat().st_mtime)
-                    if file_time < cutoff_date:
-                        file_path.unlink()
-                        deleted_count += 1 
+                    should_delete = file_time < cutoff_date
+                    
+                if should_delete:
+                    file_path.unlink()
+                    deleted_count += 1 
             
-            logger.info(f"Cleaned up {deleted_count} old files")
+            action = f"older than {days_old} days" if days_old else "all"
+            logger.info(f"Cleaned up {deleted_count} {action} files")
+            
             return deleted_count
             
         except Exception as e:
