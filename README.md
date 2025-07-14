@@ -1,112 +1,128 @@
 # SalesBrochureGenerator
 
-# A Python application that automatically generates professional company brochures by analyzing website content using AI-powered content extraction and generation.
+A Python application that automatically generates professional company brochures by analyzing website content using AI-powered content extraction and generation.
 
-Features ✨
+## Features ✨
 
-1) Intelligent Web Scraping: Automatically extracts relevant content from company websites
-2) AI-Powered Content Analysis: Uses OpenAI's GPT models to identify and extract key information
-3) Multi-language Support: Generate brochures in 10 languages that can be easily extended if needed
-4) Few-shot Prompting: Enhanced AI responses using example-based learning
-5) Streaming Output: Real-time brochure generation with live preview
-6) Professional Logging: Comprehensive logging with rich console output
-7) Metadata Tracking: Detailed generation metadata for audit trails
-8) File Management: Automatic file organization and cleanup utilities
-9) CLI Interface: User-friendly command-line interface
-10) Operational focus: Robust error handling, retry logic, and configuration management
+1. **Intelligent Web Scraping**: Automatically extracts relevant content from company websites
+2. **AI-Powered Content Analysis**: Uses OpenAI's GPT models to identify and extract key information
+3. **Multi-language Support**: Generate brochures in 10 languages that can be easily extended if needed
+4. **Few-shot Prompting**: Enhanced AI responses using example-based learning
+5. **Streaming Output**: Real-time brochure generation with live preview
+6. **Professional Logging**: Comprehensive logging with rich console output
+7. **Metadata Tracking**: Detailed generation metadata for audit trails
+8. **File Management**: Automatic file organization and cleanup utilities
+9. **CLI Interface**: User-friendly command-line interface
+10. **Operationally Sound**: Robust error handling, retry logic, and configuration management
 
-Supported Languages 🌍
+## Supported Languages 🌍
 
-English (en)
-Spanish (es)
-French (fr)
-German (de)
-Italian (it)
-Portuguese (pt)
-Chinese (zh)
-Japanese (ja)
-Korean (ko)
-Ukrainian (ua)
+- English (en)
+- Spanish (es)
+- French (fr)
+- German (de)
+- Italian (it)
+- Portuguese (pt)
+- Chinese (zh)
+- Japanese (ja)
+- Korean (ko)
+- Ukrainian (ua)
 
-# Installation 📦
+## Installation 📦
 
-# Prerequisites
+### Prerequisites
 
-1) Python 3.8 or higher
-2) OpenAI API key
+- Python 3.8 or higher
+- OpenAI API key
 
-# Core dependencies
+### Dependencies
+
+```txt
 requests>=2.31.0
-
 beautifulsoup4>=4.12.0
-
 python-dotenv>=1.0.0
-
 openai>=1.0.0
-
-# Utilities
 click>=8.1.0
-
 colorama>=0.4.6
-
 rich>=13.0.0
+```
 
-# Setup
+### Setup
 
-1) Clone the repository
+1. **Clone the repository**
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Configure environment**
    
-2) Install dependencies
-   
-3) Configure environnment. Edit .env file and add your OpenaAI API Key:
-OPENAI_API_KEY=sk-proj-your-openai-api-key-here
+   Edit `.env` file and add your OpenAI API Key:
+   ```env
+   OPENAI_API_KEY=sk-proj-your-openai-api-key-here
+   ```
 
-# Usage 💻
+## Usage 💻
 
-# Command Line Interface
+### Command Line Interface
 
-# Basic Usage:
-Generate a brochure for a company
+#### Basic Usage
 
+Generate a brochure for a company:
+```bash
 python main.py generate "Anthropic" "https://anthropic.com"
+```
 
-# Quick generation with default settings
-
+Quick generation with default settings:
+```bash
 python main.py quick "OpenAI" "https://openai.com"
+```
 
-Advanced Options
-# Generate in Spanish with streaming output
+#### Advanced Options
 
+Generate in Spanish with streaming output:
+```bash
 python main.py generate "Apple" "https://www.apple.com" --language es --stream
+```
 
-# Use specific model and save metadata
-
+Use specific model and save metadata:
+```bash
 python main.py generate "Microsoft" "https://microsoft.com" --model gpt-4o-mini --save-metadata
+```
 
-# Export to custom location
-
+Export to custom location:
+```bash
 python main.py export "Apple" "https://apple.com" --output ./custom/apple_brochure.md
+```
 
+#### Utility Commands
 
-# Utility Commands
-
-# List supported languages
+List supported languages:
+```bash
 python main.py languages
+```
 
-# Test API connection
+Test API connection:
+```bash
 python main.py test
+```
 
-# Clean up old files (older than 30 days)
+Clean up old files (older than 30 days):
+```bash
 python main.py cleanup --days 30
+```
 
-or cleanup all the files
-
+Or cleanup all files:
+```bash
 python main.py cleanup
+```
 
-# Examples 📋
+## Examples 📋
 
-# Generated Brochure Sample
+### Generated Brochure Sample
 
-
+```markdown
 # Anthropic - AI Safety Company
 
 ## About Us
@@ -130,23 +146,21 @@ impact of artificial intelligence.
 - Safety-first approach to AI development
 - Collaborative and research-oriented environment
 - Commitment to responsible AI practices
+```
 
-Performance 📊
+## Performance 📊
 
-1) Average generation time: 15-20 seconds
-2) Content processing: Up to 20,000 characters
-3) Concurrent requests: Configurable rate limiting
-4) Memory usage: ~50-100MB during generation
+- Average generation time: 15-20 seconds
+- Content processing: Up to 20,000 characters
+- Concurrent requests: Configurable rate limiting
+- Memory usage: ~50-100MB during generation
 
-Error Handling 🛡️
+## Error Handling 🛡️
+
 The application includes comprehensive error handling for:
 
-1) Network connectivity issues
-2) API rate limits and timeouts
-3) Invalid website content
-4) File system errors
-5) Configuration problems
-
-
-
-
+- Network connectivity issues
+- API rate limits and timeouts
+- Invalid website content
+- File system errors
+- Configuration problems
