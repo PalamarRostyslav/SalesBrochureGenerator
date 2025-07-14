@@ -131,6 +131,22 @@ impact of artificial intelligence.
 - Collaborative and research-oriented environment
 - Commitment to responsible AI practices
 
+Performance 📊
+
+1) Average generation time: 15-20 seconds
+2) Content processing: Up to 20,000 characters
+3) Concurrent requests: Configurable rate limiting
+4) Memory usage: ~50-100MB during generation
+
+Error Handling 🛡️
+The application includes comprehensive error handling for:
+
+1) Network connectivity issues
+2) API rate limits and timeouts
+3) Invalid website content
+4) File system errors
+5) Configuration problems
+
 
 
 
