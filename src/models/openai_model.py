@@ -1,9 +1,7 @@
 """OpenAI model interface for the Sales Brochure Generator"""
 
-import json
 from typing import List, Dict, Any, Optional
 from openai import OpenAI
-import time
 
 from .base_ai_model import BaseAIModel
 from ..configs.settings import OPENAI_API_KEY, DEFAULT_MODEL
