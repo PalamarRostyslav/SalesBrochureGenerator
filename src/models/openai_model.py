@@ -5,9 +5,6 @@ from openai import OpenAI
 
 from .base_ai_model import BaseAIModel
 from ..configs.settings import OPENAI_API_KEY, DEFAULT_MODEL
-from ..utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 class OpenAIModel(BaseAIModel):
     """OpenAI model interface with retry logic and error handling"""
@@ -25,16 +22,21 @@ class OpenAIModel(BaseAIModel):
                 self.api_key.startswith('sk-'))
         
     def _create_completion_with_retry(self, messages: List[Dict[str, str]], 
-                                    stream: bool = False, json_mode: bool = False) -> Any:
+                                    stream: bool = False, system_prompt: str = None, 
+                                    response_format_json: bool = False) -> Any:
         """Create OpenAI completion with retry logic"""
         def make_request():
+            final_messages = messages.copy()
+            if system_prompt:
+                final_messages.insert(0, {"role": "system", "content": system_prompt})
+                
             kwargs = {
                 'model': self.model,
                 'messages': messages,
                 'stream': stream
             }
             
-            if json_mode:
+            if response_format_json:
                 kwargs['response_format'] = {"type": "json_object"}
             
             return self.client.chat.completions.create(**kwargs)

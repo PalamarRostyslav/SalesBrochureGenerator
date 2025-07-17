@@ -23,6 +23,24 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'gpt-4o-mini')
 
+# ClaudeAI Configuration
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
+DEFAULT_CLAUDE_MODEL  = os.getenv('DEFAULT_CLAUDE_MODEL', 'claude-3-haiku-20240307')
+
+# Supported AI providers and models
+AI_PROVIDERS = {
+    'OpenAI': {
+        'models': ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+        'api_key_env': 'OPENAI_API_KEY',
+        'default_model': DEFAULT_MODEL
+    },
+    'Claude': {
+        'models': ['claude-3-5-haiku-20241022', 'claude-3-7-sonnet-20250219', 'claude-sonnet-4-20250514'],
+        'api_key_env': 'ANTHROPIC_API_KEY', 
+        'default_model': DEFAULT_CLAUDE_MODEL
+    }
+}
+
 # Application Settings
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', '20000'))
