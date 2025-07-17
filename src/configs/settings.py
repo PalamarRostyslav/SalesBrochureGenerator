@@ -32,12 +32,14 @@ AI_PROVIDERS = {
     'OpenAI': {
         'models': ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'],
         'api_key_env': 'OPENAI_API_KEY',
-        'default_model': DEFAULT_MODEL
+        'default_model': DEFAULT_MODEL,
+        'api_key': OPENAI_API_KEY
     },
     'Claude': {
         'models': ['claude-3-5-haiku-20241022', 'claude-3-7-sonnet-20250219', 'claude-sonnet-4-20250514'],
         'api_key_env': 'ANTHROPIC_API_KEY', 
-        'default_model': DEFAULT_CLAUDE_MODEL
+        'default_model': DEFAULT_CLAUDE_MODEL,
+        'api_key': ANTHROPIC_API_KEY
     }
 }
 
@@ -65,10 +67,42 @@ SUPPORTED_LANGUAGES = {
 def validate_config() -> bool:
     """Validate configuration settings"""
     
-    if not OPENAI_API_KEY:
-        raise ValueError("OPENAI_API_KEY is required. Please set it in your .env file.")
+    if not OPENAI_API_KEY and not ANTHROPIC_API_KEY:
+        raise ValueError("At least one API key (OPENAI_API_KEY or ANTHROPIC_API_KEY) is required. Please set it in your .env file.")
     
-    if not OPENAI_API_KEY.startswith('sk-'):
+    # Validate OpenAI API key if provided
+    if OPENAI_API_KEY and not OPENAI_API_KEY.startswith('sk-'):
         raise ValueError("Invalid OPENAI_API_KEY format. It should start with 'sk-'.")
     
+    # Validate Anthropic API key if provided
+    if ANTHROPIC_API_KEY and not ANTHROPIC_API_KEY.startswith('sk-ant-'):
+        raise ValueError("Invalid ANTHROPIC_API_KEY format. It should start with 'sk-ant-'.")
+    
     return True
+
+def get_available_providers():
+    """Get list of available providers based on configured API keys"""
+    available = []
+    
+    if OPENAI_API_KEY:
+        available.append('OpenAI')
+    
+    if ANTHROPIC_API_KEY:
+        available.append('Claude')
+    
+    return available
+
+def get_provider_info(provider_name: str):
+    """Get provider information"""
+    return AI_PROVIDERS.get(provider_name, {})
+
+def get_default_provider():
+    """Get the default provider based on available API keys"""
+    available = get_available_providers()
+    
+    if 'OpenAI' in available:
+        return 'OpenAI'
+    elif 'Claude' in available:
+        return 'Claude'
+    else:
+        return None
