@@ -13,10 +13,27 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from src.generators.brochure_generator import BrochureGenerator, GenerationOptions
-from src.configs.settings import validate_config, SUPPORTED_LANGUAGES
+from src.configs.settings import validate_config, SUPPORTED_LANGUAGES, AI_PROVIDERS, get_available_providers
 from src.utils.logger import get_logger
+from src.ui.ui_launcher import launch_ui
 
 logger = get_logger("main")
+
+def get_api_key_for_provider(provider: str) -> Optional[str]:
+    """Get the correct API key for the specified provider."""
+    # Mapping provider names
+    provider_mapping = {
+        'openai': 'OpenAI',
+        'claude': 'Claude',
+        'anthropic': 'Claude'
+    }
+    
+    provider_key = provider_mapping.get(provider.lower())
+    if not provider_key:
+        return None
+        
+    provider_info = AI_PROVIDERS.get(provider_key, {})
+    return provider_info.get('api_key')
 
 @click.group()
 @click.version_option(version="1.0.0")
@@ -41,17 +58,33 @@ def cli():
 @click.option('--save-metadata/--no-metadata', default=True,
     help='Save generation metadata')
 @click.option('--model', '-m', default=None,
-    help='OpenAI model to use (overrides default)')
+    help='AI model to use (overrides default)')
+@click.option('--provider', '-p', default='openai',
+    type=click.Choice(['openai', 'claude']),
+    help='AI provider to use')
 def generate(company_name: str, website_url: str, language: str, 
-            stream: bool, few_shot: bool, save_metadata: bool, model: Optional[str]):
+            stream: bool, few_shot: bool, save_metadata: bool, model: Optional[str], provider: str):
     """Generate a brochure for a company from their website
     
     COMPANY_NAME: Name of the company
     WEBSITE_URL: Company website URL (must start with http:// or https://)
     """
     try:
-        # Initialize generator
-        generator = BrochureGenerator(model=model)
+        # Check if the provider is available
+        available_providers = [p.lower() for p in get_available_providers()]
+        if provider not in available_providers:
+            logger.error(f"Provider '{provider}' not available. Configured providers: {available_providers}")
+            logger.info("Please configure the required API key in your .env file:")
+            sys.exit(1)
+        
+        # Get the correct API key for the provider
+        api_key = get_api_key_for_provider(provider)
+        if not api_key:
+            logger.error(f"No API key found for provider '{provider}'")
+            sys.exit(1)
+        
+        # Initialize generator with the correct API key
+        generator = BrochureGenerator(api_key=api_key, model=model, provider=provider)
         
         # Set up options
         options = GenerationOptions(
@@ -63,10 +96,11 @@ def generate(company_name: str, website_url: str, language: str,
         
         logger.info(f"Generating brochure for {company_name}")
         logger.info(f"Website: {website_url}")
+        logger.info(f"Provider: {provider}")
         logger.info(f"Language: {SUPPORTED_LANGUAGES[language]}")
         
-        # Stream generation
         if stream:
+            # Stream generation with real-time output
             result = None
             for chunk in generator.stream_brochure_generation(company_name, website_url, options):
                 if isinstance(chunk, str):
@@ -74,7 +108,7 @@ def generate(company_name: str, website_url: str, language: str,
                 else:
                     result = chunk
             
-            print("\n")
+            print("\n")  # New line after streaming
             
         else:
             # Regular generation
@@ -95,14 +129,34 @@ def generate(company_name: str, website_url: str, language: str,
 @cli.command()
 @click.argument('company_name')
 @click.argument('website_url')
-def quick(company_name: str, website_url: str):
-    """Quick brochure generation with default settings.
+@click.option('--provider', '-p', default=None,
+    type=click.Choice(['openai', 'claude']),
+    help='AI provider to use (auto-detects if not specified)')
+def quick(company_name: str, website_url: str, provider: Optional[str]):
+    """Quick brochure generation with default settings
     
     COMPANY_NAME: Name of the company
     WEBSITE_URL: Company website URL
     """
     try:
-        generator = BrochureGenerator()
+        # Auto-detect provider if not specified
+        if not provider:
+            available_providers = [p.lower() for p in get_available_providers()]
+            if 'openai' in available_providers:
+                provider = 'openai'
+            elif 'claude' in available_providers:
+                provider = 'claude'
+            else:
+                logger.error("No AI providers configured. Please set up API keys in .env file.")
+                sys.exit(1)
+        
+        # Get API key for the provider
+        api_key = get_api_key_for_provider(provider)
+        if not api_key:
+            logger.error(f"No API key found for provider '{provider}'")
+            sys.exit(1)
+        
+        generator = BrochureGenerator(api_key=api_key, provider=provider)
         result = generator.generate_brochure(company_name, website_url)
         
         logger.safe_print(result.content)
@@ -114,41 +168,70 @@ def quick(company_name: str, website_url: str):
 
 @cli.command()
 def languages():
-    """List supported languages for brochure generation."""
+    """List supported languages for brochure generation"""
     logger.info("Supported languages:")
     for code, name in SUPPORTED_LANGUAGES.items():
         logger.console.print(f"  {code}: {name}")
 
 @cli.command()
-@click.option('--days', '-d', default=None, type=int,
-    help='Delete files older than this many days. If not specified, deletes all files')
+@click.option('--days', '-d', default=30, type=int,
+    help='Delete files older than this many days')
 def cleanup(days: int):
-    """Clean up old generated files."""
+    """Clean up old generated files"""
     try:
-        generator = BrochureGenerator()
-        deleted_count = generator.cleanup_files(days)
-        if days is not None:
-            logger.success(f"Cleaned up {deleted_count} files older than {days} days")
-        else:
-            logger.success(f"Cleaned up {deleted_count} files (all files)")
+        # Use any available provider for cleanup (doesn't matter which)
+        available_providers = [p.lower() for p in get_available_providers()]
+        if not available_providers:
+            logger.error("No AI providers configured. Cannot initialize generator for cleanup.")
+            sys.exit(1)
+        
+        provider = available_providers[0]
+        api_key = get_api_key_for_provider(provider)
+        generator = BrochureGenerator(api_key=api_key, provider=provider)
+        
+        deleted_count = generator.cleanup_old_files(days)
+        logger.success(f"Cleaned up {deleted_count} files older than {days} days")
         
     except Exception as e:
         logger.error("Cleanup failed", e)
         sys.exit(1)
 
 @cli.command()
-def test():
-    """Test the OpenAI API connection and configuration."""
+@click.option('--provider', '-p', default=None,
+    type=click.Choice(['openai', 'claude']),
+    help='AI provider to test (tests all if not specified)')
+def test(provider: Optional[str]):
+    """Test API connection and configuration"""
     try:
-        logger.step("Testing configuration and API connection...")
+        if provider:
+            providers_to_test = [provider]
+        else:
+            providers_to_test = [p.lower() for p in get_available_providers()]
         
-        generator = BrochureGenerator()
-        model_info = generator.ai_model.get_model_info()
+        if not providers_to_test:
+            logger.error("No AI providers configured. Please set up API keys in .env file.")
+            logger.info("Required environment variables:")
+            logger.info("  OPENAI_API_KEY=sk-proj-your-openai-key")
+            logger.info("  ANTHROPIC_API_KEY=sk-ant-your-anthropic-key")
+            sys.exit(1)
         
-        logger.success("Configuration test passed!")
-        logger.info(f"Model: {model_info['model']}")
-        logger.info(f"API Key Valid: {model_info['api_key_valid']}")
-        logger.info(f"Max Retries: {model_info['max_retries']}")
+        for test_provider in providers_to_test:
+            logger.step(f"Testing {test_provider} configuration and API connection...")
+            
+            api_key = get_api_key_for_provider(test_provider)
+            if not api_key:
+                logger.error(f"No API key found for {test_provider}")
+                continue
+            
+            generator = BrochureGenerator(api_key=api_key, provider=test_provider)
+            model_info = generator.ai_model.get_model_info()
+            
+            logger.success(f"{test_provider.title()} configuration test passed!")
+            logger.info(f"Provider: {model_info.get('provider', test_provider)}")
+            logger.info(f"Model: {model_info['model']}")
+            logger.info(f"API Key Valid: {model_info['api_key_valid']}")
+            logger.info(f"Max Retries: {model_info['max_retries']}")
+            logger.print_separator()
         
     except Exception as e:
         logger.error("Configuration test failed", e)
@@ -159,14 +242,34 @@ def test():
 @click.argument('website_url')
 @click.option('--output', '-o', type=click.Path(), 
     help='Custom output file path')
-def export(company_name: str, website_url: str, output: Optional[str]):
+@click.option('--provider', '-p', default=None,
+    type=click.Choice(['openai', 'claude']),
+    help='AI provider to use (auto-detects if not specified)')
+def export(company_name: str, website_url: str, output: Optional[str], provider: Optional[str]):
     """Generate and export brochure to a custom location.
     
     COMPANY_NAME: Name of the company
     WEBSITE_URL: Company website URL
     """
     try:
-        generator = BrochureGenerator()
+        # Auto-detect provider if not specified
+        if not provider:
+            available_providers = [p.lower() for p in get_available_providers()]
+            if 'openai' in available_providers:
+                provider = 'openai'
+            elif 'claude' in available_providers:
+                provider = 'claude'
+            else:
+                logger.error("No AI providers configured. Please set up API keys in .env file.")
+                sys.exit(1)
+        
+        # Get API key for the provider
+        api_key = get_api_key_for_provider(provider)
+        if not api_key:
+            logger.error(f"No API key found for provider '{provider}'")
+            sys.exit(1)
+        
+        generator = BrochureGenerator(api_key=api_key, provider=provider)
         result = generator.generate_brochure(company_name, website_url)
         
         if output:
@@ -184,6 +287,20 @@ def export(company_name: str, website_url: str, output: Optional[str]):
         
     except Exception as e:
         logger.error("Export failed", e)
+        sys.exit(1)
+
+@cli.command()
+def ui():
+    """Launch the Gradio web interface."""
+    try:
+        logger.info("Starting Gradio web interface...")
+        launch_ui()
+        
+    except ImportError:
+        logger.error("Gradio not installed. Install with: pip install gradio")
+        sys.exit(1)
+    except Exception as e:
+        logger.error("Failed to launch UI", e)
         sys.exit(1)
 
 def main():

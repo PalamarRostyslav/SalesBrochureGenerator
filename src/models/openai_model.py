@@ -4,16 +4,17 @@ from typing import List, Dict, Any, Optional
 from openai import OpenAI
 
 from .base_ai_model import BaseAIModel
-from ..configs.settings import OPENAI_API_KEY, DEFAULT_MODEL
+from ..configs.settings import DEFAULT_MODEL, AI_PROVIDERS
 
 class OpenAIModel(BaseAIModel):
     """OpenAI model interface with retry logic and error handling"""
     
     def __init__(self, api_key: str = None, model: str = None):
-        api_key = api_key or OPENAI_API_KEY
+        if not api_key:
+            api_key = AI_PROVIDERS.get('OpenAI', {}).get('api_key')
+        
         model = model or DEFAULT_MODEL
         super().__init__(api_key, model, "OpenAI")
-        
         self.client = OpenAI(api_key=self.api_key)
         
     def _validate_api_key(self) -> bool:
@@ -32,7 +33,7 @@ class OpenAIModel(BaseAIModel):
                 
             kwargs = {
                 'model': self.model,
-                'messages': messages,
+                'messages': final_messages,
                 'stream': stream
             }
             

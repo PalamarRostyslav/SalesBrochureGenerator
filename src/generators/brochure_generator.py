@@ -5,6 +5,7 @@ from datetime import datetime
 from dataclasses import dataclass
 
 from ..models.openai_model import OpenAIModel
+from ..models.claude_model import ClaudeModel
 from ..scrapers.website_scraper import WebsiteScraper, WebsiteContent
 from ..utils.file_handler import FileHandler
 from ..utils.text_utils import truncate_content, format_company_name, extract_domain
@@ -34,14 +35,20 @@ class GenerationResult:
 class BrochureGenerator:
     """Main brochure generator class"""
     
-    def __init__(self, api_key: str = None, model: str = None):
-        self.ai_model = OpenAIModel(api_key=api_key, model=model)
+    def __init__(self, api_key: str = None, model: str = None, provider: str = "openai"):
+        if provider.lower() == "openai":
+            self.ai_model = OpenAIModel(api_key=api_key, model=model)
+        elif provider.lower() == "claude" or provider.lower() == "anthropic":
+            self.ai_model = ClaudeModel(api_key=api_key, model=model)
+        else:
+            self.ai_model = OpenAIModel(api_key=api_key, model=model)
+            
         self.scraper = WebsiteScraper()
         self.file_handler = FileHandler()
         
         # Test connection on initialization
         if not self.ai_model.test_connection():
-            raise ConnectionError("Failed to connect to OpenAI API")
+            raise ConnectionError(f"Failed to connect to {self.ai_model.provider_name} API")
         
         logger.success("BrochureGenerator initialized successfully")
         

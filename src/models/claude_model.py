@@ -4,16 +4,17 @@ from typing import List, Dict, Any, Optional
 import anthropic
 
 from .base_ai_model import BaseAIModel
-from ..configs.settings import ANTHROPIC_API_KEY, DEFAULT_CLAUDE_MODEL
+from ..configs.settings import DEFAULT_CLAUDE_MODEL, AI_PROVIDERS
 
 class ClaudeModel(BaseAIModel):
     """Claude (Anthropic) model implementation with shared base functionality"""
     
     def __init__(self, api_key: str = None, model: str = None):
-        api_key = api_key or ANTHROPIC_API_KEY
+        if not api_key:
+            api_key = AI_PROVIDERS.get('Claude', {}).get('api_key')
+        
         model = model or DEFAULT_CLAUDE_MODEL
         super().__init__(api_key, model, "Claude")
-        
         self.client = anthropic.Anthropic(api_key=self.api_key)
     
     def _validate_api_key(self) -> bool:
