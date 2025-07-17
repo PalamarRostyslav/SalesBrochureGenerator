@@ -8,7 +8,7 @@ from ..models.openai_model import OpenAIModel
 from ..models.claude_model import ClaudeModel
 from ..scrapers.website_scraper import WebsiteScraper, WebsiteContent
 from ..utils.file_handler import FileHandler
-from ..utils.text_utils import truncate_content, format_company_name, extract_domain
+from ..utils.text_utils import format_company_name, ContentCombiner, LinkExtractor
 from ..utils.logger import get_logger
 from ..configs.settings import MAX_CONTENT_LENGTH, SUPPORTED_LANGUAGES
 
@@ -63,21 +63,19 @@ class BrochureGenerator:
         logger.print_header(f"Generating Brochure for {company_name}")
         
         try:
-            self._validate_inputs(company_name, website_url, options)
-            
             # Step 1: Scrape main website
             main_content = self._scrape_main_website(website_url)
             if not main_content:
                 raise ValueError("Failed to scrape main website")
             
             # Step 2: Extract relevant links
-            relevant_links = self._extract_relevant_links(website_url, main_content.links)
+            relevant_links = LinkExtractor.extract(self.ai_model, self.scraper, website_url, main_content.links)
             
             # Step 3: Scrape additional pages
             additional_content = self._scrape_additional_pages(relevant_links)
             
             # Step 4: Combine all content
-            combined_content = self._combine_website_content(main_content, additional_content)
+            combined_content = ContentCombiner.combine(main_content, additional_content, options.max_content_length)
             
             # Step 5: Generate brochure
             if options.stream_output:
@@ -133,11 +131,10 @@ class BrochureGenerator:
         
         try:
             # Prepare content (same as regular generation)
-            self._validate_inputs(company_name, website_url, options)
             main_content = self._scrape_main_website(website_url)
-            relevant_links = self._extract_relevant_links(website_url, main_content.links)
+            relevant_links = LinkExtractor.extract(self.ai_model, self.scraper, website_url, main_content.links)
             additional_content = self._scrape_additional_pages(relevant_links)
-            combined_content = self._combine_website_content(main_content, additional_content)
+            combined_content = ContentCombiner.combine(main_content, additional_content, options.max_content_length)
             
             logger.step("Starting streaming generation...")
             logger.print_separator()
@@ -174,37 +171,10 @@ class BrochureGenerator:
         finally:
             self.scraper.close()
             
-    def _validate_inputs(self, company_name: str, website_url: str, options: GenerationOptions):
-        """Validate input parameters"""
-        if not company_name or not company_name.strip():
-            raise ValueError("Company name is required")
-        
-        if not website_url or not website_url.startswith(('http://', 'https://')):
-            raise ValueError("Valid website URL is required")
-        
-        if options.language not in SUPPORTED_LANGUAGES:
-            raise ValueError(f"Unsupported language: {options.language}")
-    
     def _scrape_main_website(self, website_url: str) -> WebsiteContent:
         """Scrape the main website"""
         logger.step("Scraping main website")
         return self.scraper.scrape_website(website_url)
-    
-    def _extract_relevant_links(self, website_url: str, links: List[str]) -> List[Dict[str, str]]:
-        """Extract relevant links using AI"""
-        logger.step("Extracting relevant links with AI")
-        
-        # Filter links to same domain first
-        base_domain = extract_domain(website_url)
-        filtered_links = self.scraper.filter_relevant_links(links, base_domain)
-        
-        if not filtered_links:
-            logger.warning("No relevant links found")
-            return []
-        
-        # Use AI to select the most relevant links
-        result = self.ai_model.extract_links(website_url, filtered_links[:20]) 
-        return result.get('links', [])
     
     def _scrape_additional_pages(self, relevant_links: List[Dict[str, str]]) -> Dict[str, WebsiteContent]:
         """Scrape additional relevant pages."""
@@ -215,42 +185,6 @@ class BrochureGenerator:
         
         urls = [link['url'] for link in relevant_links]
         return self.scraper.scrape_multiple_websites(urls)
-    
-    def _combine_website_content(self, main_content: WebsiteContent, additional_content: Dict[str, WebsiteContent]) -> str:
-        """Combine all scraped content into a single string"""
-        logger.step("Combining website content")
-        
-        combined = "Landing page:\n"
-        combined += main_content.get_formatted_content()
-        
-        for url, content in additional_content.items():
-            page_type = self._determine_page_type(url, content)
-            combined += f"\n\n{page_type}:\n"
-            combined += content.get_formatted_content()
-        
-        # Truncate if too long
-        if len(combined) > MAX_CONTENT_LENGTH:
-            combined = truncate_content(combined, MAX_CONTENT_LENGTH)
-            logger.warning(f"Content truncated to {MAX_CONTENT_LENGTH} characters")
-        
-        return combined
-    
-    def _determine_page_type(self, url: str, content: WebsiteContent) -> str:
-        """Determine the type of page from URL and content"""
-        url_lower = url.lower()
-        
-        if 'about' in url_lower:
-            return "About page"
-        elif 'career' in url_lower or 'job' in url_lower:
-            return "Careers page"
-        elif 'team' in url_lower:
-            return "Team page"
-        elif 'product' in url_lower or 'service' in url_lower:
-            return "Products/Services page"
-        elif 'contact' in url_lower:
-            return "Contact page"
-        else:
-            return "Company page"
     
     def _generate_brochure_content(self, company_name: str, content: str, options: GenerationOptions) -> str:
         """Generate brochure content using AI"""
@@ -303,7 +237,7 @@ class BrochureGenerator:
             'main_page_scraped': True,
             'additional_pages_count': len(additional_content),
             'additional_pages_urls': list(additional_content.keys()),
-            'total_content_length': len(self._combine_website_content(main_content, additional_content)),
+            'total_content_length': len(ContentCombiner.combine(main_content, additional_content, options.max_content_length)),
             'options': {
                 'use_few_shot': options.use_few_shot,
                 'stream_output': options.stream_output,

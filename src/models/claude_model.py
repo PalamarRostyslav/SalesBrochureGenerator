@@ -9,20 +9,16 @@ from ..configs.settings import DEFAULT_CLAUDE_MODEL, AI_PROVIDERS
 class ClaudeModel(BaseAIModel):
     """Claude (Anthropic) model implementation with shared base functionality"""
     
-    def __init__(self, api_key: str = None, model: str = None):
-        if not api_key:
-            api_key = AI_PROVIDERS.get('Claude', {}).get('api_key')
-        
-        model = model or DEFAULT_CLAUDE_MODEL
-        super().__init__(api_key, model, "Claude")
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+        api_key_val = api_key if api_key is not None else AI_PROVIDERS.get('Claude', {}).get('api_key', '')
+        model_val = model if model is not None else DEFAULT_CLAUDE_MODEL
+        super().__init__(str(api_key_val), str(model_val), "Claude")
         self.client = anthropic.Anthropic(api_key=self.api_key)
+        self._response_path = ["content", 0, "text"]
     
     def _validate_api_key(self) -> bool:
         """Validate the Anthropic API key format"""
-        
-        return (self.api_key and 
-                self.api_key.startswith('sk-ant-') and 
-                len(self.api_key) > 20)
+        return bool(self.api_key and self.api_key.startswith('sk-ant-') and len(self.api_key) > 20)
         
     def _create_completion_with_retry(self, messages: List[Dict[str, str]], 
                                     stream: bool = False, system_prompt: str = None,
@@ -42,10 +38,6 @@ class ClaudeModel(BaseAIModel):
             return self.client.messages.create(**kwargs)
         
         return self._retry_with_backoff(make_request)
-    
-    def _extract_text_from_response(self, response: Any) -> str:
-        """Extract text content from Claude response"""
-        return response.content[0].text
     
     def _extract_text_from_stream_chunk(self, chunk: Any) -> Optional[str]:
         """Extract text from Claude streaming chunk"""

@@ -151,3 +151,46 @@ def validate_content_quality(content: str) -> dict:
         'char_count': char_count,
         'issues': issues
     }
+
+class ContentCombiner:
+    @staticmethod
+    def combine(main_content, additional_content, max_length):
+        """Combine all scraped content into a single string, truncating if too long"""
+        combined = "Landing page:\n"
+        combined += main_content.get_formatted_content()
+        for url, content in additional_content.items():
+            page_type = ContentCombiner._determine_page_type(url, content)
+            combined += f"\n\n{page_type}:\n"
+            combined += content.get_formatted_content()
+        if len(combined) > max_length:
+            from .text_utils import truncate_content
+            combined = truncate_content(combined, max_length)
+        return combined
+
+    @staticmethod
+    def _determine_page_type(url, content):
+        url_lower = url.lower()
+        if 'about' in url_lower:
+            return "About page"
+        elif 'career' in url_lower or 'job' in url_lower:
+            return "Careers page"
+        elif 'team' in url_lower:
+            return "Team page"
+        elif 'product' in url_lower or 'service' in url_lower:
+            return "Products/Services page"
+        elif 'contact' in url_lower:
+            return "Contact page"
+        else:
+            return "Company page"
+
+class LinkExtractor:
+    @staticmethod
+    def extract(ai_model, scraper, website_url, links):
+        """Filter links to same domain and use AI to select the most relevant"""
+        from .text_utils import extract_domain
+        base_domain = extract_domain(website_url)
+        filtered_links = scraper.filter_relevant_links(links, base_domain)
+        if not filtered_links:
+            return []
+        result = ai_model.extract_links(website_url, filtered_links[:20])
+        return result.get('links', [])

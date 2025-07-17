@@ -16,6 +16,7 @@ from src.generators.brochure_generator import BrochureGenerator, GenerationOptio
 from src.configs.settings import validate_config, SUPPORTED_LANGUAGES, AI_PROVIDERS, get_available_providers
 from src.utils.logger import get_logger
 from src.ui.ui_launcher import launch_ui
+from src.utils.validation import InputValidator
 
 logger = get_logger("main")
 
@@ -83,6 +84,8 @@ def generate(company_name: str, website_url: str, language: str,
             logger.error(f"No API key found for provider '{provider}'")
             sys.exit(1)
         
+        # Validate all inputs before proceeding
+        InputValidator.validate_all(company_name, website_url, provider, model, language, api_key, raise_on_error=True)
         # Initialize generator with the correct API key
         generator = BrochureGenerator(api_key=api_key, model=model, provider=provider)
         
@@ -156,6 +159,7 @@ def quick(company_name: str, website_url: str, provider: Optional[str]):
             logger.error(f"No API key found for provider '{provider}'")
             sys.exit(1)
         
+        InputValidator.validate_all(company_name, website_url, provider, None, None, api_key, raise_on_error=True)
         generator = BrochureGenerator(api_key=api_key, provider=provider)
         result = generator.generate_brochure(company_name, website_url)
         
@@ -269,6 +273,7 @@ def export(company_name: str, website_url: str, output: Optional[str], provider:
             logger.error(f"No API key found for provider '{provider}'")
             sys.exit(1)
         
+        InputValidator.validate_all(company_name, website_url, provider, None, None, api_key, raise_on_error=True)
         generator = BrochureGenerator(api_key=api_key, provider=provider)
         result = generator.generate_brochure(company_name, website_url)
         

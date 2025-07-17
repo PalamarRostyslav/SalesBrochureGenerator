@@ -1,7 +1,7 @@
 """Gradio web interface for the Sales Brochure Generator."""
 
 import gradio as gr
-from typing import Optional, Tuple, Generator
+from typing import Optional, Generator
 import traceback
 
 from ..generators.brochure_generator import BrochureGenerator, GenerationOptions
@@ -9,6 +9,7 @@ from ..models.openai_model import OpenAIModel
 from ..models.claude_model import ClaudeModel
 from ..configs.settings import (SUPPORTED_LANGUAGES, AI_PROVIDERS, get_available_providers, get_default_provider)
 from ..utils.logger import get_logger
+from ..utils.validation import InputValidator
 
 logger = get_logger("gradio_ui")
 
@@ -40,28 +41,7 @@ class GradioInterface:
             return ClaudeModel(api_key=api_key, model=model)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
-        
-    def _validate_inputs(self, company_name: str, website_url: str, provider: str,
-                        model: str) -> Tuple[bool, str]:
-        
-        if not company_name or not company_name.strip():
-            return False, "❌ Company name is required"
-        
-        if not website_url or not website_url.startswith(('http://', 'https://')):
-            return False, "❌ Valid website URL is required (must start with http:// or https://)"
-        
-        if not provider:
-            return False, "❌ AI provider must be selected"
-            
-        if not model:
-            return False, "❌ Model must be selected"
-            
-        # Check if API key is available for the provider
-        api_key = self._get_api_key(provider)
-        if not api_key:
-            return False, f"❌ {provider} API key not configured in environment"
-        
-        return True, "✅ All inputs valid"
+
     
     def update_models_dropdown(self, provider: str) -> gr.Dropdown:
         """Update model dropdown based on selected provider"""
@@ -107,14 +87,10 @@ class GradioInterface:
             model: str, language: str, 
             use_few_shot: bool, stream_output: bool) -> Generator[str, None, None]:
         try:
-            is_valid, message = self._validate_inputs(company_name, website_url, provider, model)
-            if not is_valid:
-                yield message
-                return
-            
             api_key = self._get_api_key(provider)
-            if not api_key:
-                yield f"❌ {provider} API key not configured in environment"
+            is_valid, message = InputValidator.validate_all(company_name, website_url, provider, model, language, api_key)
+            if not is_valid:
+                yield f"❌ {message}"
                 return
             
             # Create AI Model

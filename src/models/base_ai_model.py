@@ -41,10 +41,24 @@ class BaseAIModel(ABC):
         """Create completion with retry logic (provider-specific)"""
         pass
     
-    @abstractmethod
+    def _get_response_text(self, response: Any, path: list) -> str:
+        """Extract text from a nested response object using a path list."""
+        for key in path:
+            if isinstance(response, dict):
+                response = response[key]
+            elif isinstance(key, int):
+                response = response[key]
+            else:
+                response = getattr(response, key, None)
+            if response is None:
+                raise ValueError(f"Invalid response path: {path}")
+        return response
+
     def _extract_text_from_response(self, response: Any) -> str:
-        """Extract text content from API response (provider-specific)"""
-        pass
+        """Default implementation, expects subclass to set self._response_path."""
+        if hasattr(self, "_response_path"):
+            return self._get_response_text(response, self._response_path)
+        raise NotImplementedError("Subclasses must define _response_path or override this method.")
     
     @abstractmethod
     def _extract_text_from_stream_chunk(self, chunk: Any) -> Optional[str]:
