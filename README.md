@@ -49,20 +49,24 @@ gradio>=4.0.0
 
 3. **Configure environment**
    
-   Edit `.env` file and add your model API Key:
+   # ==============================================
+   # At least one API key is required
+   OPENAI_API_KEY=sk-proj-your-openai-api-key-here
+   ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here
    
-   # OpenAI Configuration
-   OPENAI_API_KEY=sk-proj-yourkey
-   ANTHROPIC_API_KEY=sk-ant-yourkey
+   # ==============================================
 
-   # Application Settings
    DEFAULT_MODEL=gpt-4o-mini
    DEFAULT_CLAUDE_MODEL=claude-3-haiku-20240307
+   
+   # ==============================================
+
    LOG_LEVEL=INFO
    OUTPUT_DIR=output/brochures
    MAX_CONTENT_LENGTH=20000
    
-   # Request Settings
+   # ==============================================
+   
    REQUEST_TIMEOUT=30
    MAX_RETRIES=3
    
