@@ -31,9 +31,11 @@ requests>=2.31.0
 beautifulsoup4>=4.12.0
 python-dotenv>=1.0.0
 openai>=1.0.0
+anthropic>=0.21.0
 click>=8.1.0
 colorama>=0.4.6
 rich>=13.0.0
+gradio>=4.0.0
 ```
 
 ### Setup
