@@ -17,6 +17,11 @@ A Python application that automatically generates professional company brochures
 - **🗂️ File Management**: Automatic file organization and cleanup utilities
 - **🔧 Production Ready**: Robust error handling, retry logic, and configuration management
 
+
+## UI Example
+<img width="2849" height="1456" alt="image" src="https://github.com/user-attachments/assets/c424347c-de30-4bcf-9b84-893de96ae69a" />
+
+
 ## Installation 📦
 
 ### Prerequisites
