@@ -27,7 +27,7 @@ A Python application that automatically generates professional company brochures
 ### Prerequisites
 
 - Python 3.8 or higher
-- OpenAI API key
+- OpenAI API key/ Anthropic(Claude) API key
 
 ### Dependencies
 
