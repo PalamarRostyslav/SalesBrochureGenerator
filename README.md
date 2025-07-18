@@ -48,26 +48,23 @@ gradio>=4.0.0
    ```
 
 3. **Configure environment**
-   
-   # ==============================================
    # At least one API key is required
    OPENAI_API_KEY=sk-proj-your-openai-api-key-here
-   ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here
    
-   # ==============================================
+   ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key-here
 
    DEFAULT_MODEL=gpt-4o-mini
-   DEFAULT_CLAUDE_MODEL=claude-3-haiku-20240307
    
-   # ==============================================
+   DEFAULT_CLAUDE_MODEL=claude-3-haiku-20240307
 
    LOG_LEVEL=INFO
+   
    OUTPUT_DIR=output/brochures
+   
    MAX_CONTENT_LENGTH=20000
    
-   # ==============================================
-   
    REQUEST_TIMEOUT=30
+   
    MAX_RETRIES=3
    
 
